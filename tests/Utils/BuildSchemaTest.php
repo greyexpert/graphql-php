@@ -1119,4 +1119,44 @@ type World implements Hello {
         $this->assertArrayHasKey('Hello', $types);
         $this->assertArrayHasKey('World', $types);
     }
+
+    /**
+     * @it applies one extension to type definition
+     */
+    public function testSingleTypeExtension()
+    {
+        $schema = BuildSchema::buildAST(Parser::parse('
+            schema { query: Query }
+            type Query {
+                user: User!
+            }
+            
+            type User {
+                name: String
+            }
+            
+            extend type User {
+                email: String
+            }
+        '));
+
+        $source = '
+            {
+                user {
+                    name
+                    email
+                }
+            }
+        ';
+
+        $rootValue = [
+            "user" => [
+                "name" => "John",
+                "email" => "john@gmail.com"
+            ]
+        ];
+
+        $result = GraphQL::executeQuery($schema, $source, $rootValue)->toArray();
+        $this->assertEquals($result['data'], $rootValue);
+    }
 }
